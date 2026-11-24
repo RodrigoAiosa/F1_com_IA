@@ -95,8 +95,15 @@ class Track:
 
     # ------------------------------------------------------------------ construção
     @classmethod
-    def from_control_points(cls, name, points, width=14.0, **kw):
+    def from_control_points(cls, name, points, width=14.0, smooth_m: float = 0.0, **kw):
         dense = catmull_rom_closed(points)
+        if smooth_m > 0:   # suaviza ruído de pontos traçados à mão (média móvel circular em metros)
+            dense = resample_closed(dense, 2.0)
+            k = max(3, int(smooth_m / 2.0) | 1)
+            pad = k // 2
+            ker = np.ones(k) / k
+            ext = np.concatenate([dense[-pad:], dense, dense[:pad]])
+            dense = np.stack([np.convolve(ext[:, i], ker, mode="valid") for i in range(2)], axis=1)
         if not np.isscalar(width):  # largura por ponto de controle -> interpola ao longo da spline
             w = np.asarray(width, float)
             n = len(points)

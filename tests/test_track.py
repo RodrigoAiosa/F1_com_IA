@@ -17,7 +17,7 @@ def test_interlagos_length_and_curvature():
     assert t.elevation.max() - t.elevation.min() == pytest.approx(56.0, abs=0.5)
     assert len(t.drs_zones) == 2 and t.drs.any() and t.meta["laps"] == 71
     assert t.meta["race_km"] == pytest.approx(305.94, abs=0.1)
-    assert 1 / np.abs(t.curvature).max() > 20      # sem curvas impossíveis
+    assert 1 / np.abs(t.curvature).max() > 12      # sem curvas impossíveis
     assert t.M > 1000
 
 

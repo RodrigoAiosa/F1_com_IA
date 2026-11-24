@@ -34,10 +34,10 @@ Treinar em várias pistas: `--tracks interlagos,seed:1-5` (fitness = média). `-
 - **Checkpoints**: `runs/<nome>/checkpoints/gen_NNNN.npz` (população ordenada) + `history.csv`. Replays são re-simulações determinísticas do melhor genoma de cada geração.
 
 ## Resultado (treino real, 100 gerações, só em Interlagos)
-Geração 1 sai da pista; geração 15 completa em 124,2 s; geração 100 completa em 113,5 s (melhor que o piloto automático, 122,6 s). Gráficos em `docs/evolucao.png` e `docs/comparacao.png`.
+Geração 1 sai da pista aos 9% da volta; a geração 20 já completa (208,5 s); a 100 completa em 145,9 s. Em 20 pistas novas por semente, o melhor carro completou 20/20. Gráficos em `docs/evolucao.png` e `docs/comparacao.png`.
 
 ## Vercel
 `app.py` é detectado automaticamente (FastAPI); `public/` vai para a CDN; `requirements.txt` tem só fastapi e numpy. Rotas: `/api/health`, `/api/models`, `/api/track`, `/api/simulate?track=seed:7&model=interlagos_best`. Deploy: `vercel deploy`.
 
 ## Escala de Interlagos
-Extensão ajustada a **4.309,0 m**; corrida de **71 voltas = 305,94 km**; perfil de altitude com **56 m de desnível** e média ~765 m (a inclinação afeta aceleração/frenagem); **2 zonas de DRS** (reta dos boxes e reta oposta, +6% de velocidade final). O traçado em planta e o perfil de altitude são aproximações desenhadas à mão, não dados topográficos oficiais.
+Extensão ajustada a **4.309,0 m**; corrida de **71 voltas = 305,94 km**; perfil de altitude com **56 m de desnível** e média ~765 m (a inclinação afeta aceleração/frenagem); **2 zonas de DRS** (reta dos boxes e reta oposta, +6% de velocidade final). O traçado em planta vem do mapa oficial (imagem); o perfil de altitude é uma aproximação, não dado topográfico oficial.
