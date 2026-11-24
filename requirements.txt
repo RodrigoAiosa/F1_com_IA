@@ -1,0 +1,3 @@
+# Dependências mínimas (é o que a Vercel instala). Treino/UI: requirements-dev.txt
+fastapi>=0.115
+numpy>=1.26

@@ -1,0 +1,5 @@
+# Somente configuração de ferramentas. As dependências ficam em requirements*.txt
+# (a Vercel lê requirements.txt; o treino local usa requirements-dev.txt).
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

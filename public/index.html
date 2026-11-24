@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F1 com IA — neuroevolução em Interlagos</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>F1 <span>com IA</span></h1>
+    <p>Carrinhos com redes neurais pequenas que evoluem por seleção, cruzamento e mutação até completar a volta.</p>
+    <nav id="tabs">
+      <button data-tab="race" class="active">Corrida</button>
+      <button data-tab="evo">Evolução</button>
+      <button data-tab="compare">Comparar gerações</button>
+      <button data-tab="gen">Generalização</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Corrida -->
+    <section id="tab-race" class="tab active">
+      <div class="panel controls">
+        <label>Pista
+          <select id="trackKind">
+            <option value="interlagos">Interlagos (estilizada)</option>
+            <option value="seed">Pista gerada por semente</option>
+          </select>
+        </label>
+        <label id="seedBox" hidden>Semente
+          <input id="seed" type="number" min="0" max="999999" value="7">
+          <button id="randSeed" type="button" title="Sortear semente">🎲</button>
+        </label>
+        <label>Piloto
+          <select id="model"><option value="autopilot">Piloto automático</option></select>
+        </label>
+        <button id="run" class="primary">Simular</button>
+        <span id="status" class="muted"></span>
+      </div>
+      <div class="stage">
+        <canvas id="canvas-race" width="1100" height="640"></canvas>
+        <div class="bar">
+          <button id="play">⏸</button>
+          <input id="scrub" type="range" min="0" max="1000" value="0">
+          <select id="speed"><option>0.5</option><option selected>1</option><option>2</option><option>4</option><option>8</option></select><span class="muted">×</span>
+          <label class="inline"><input id="follow" type="checkbox"> seguir carro</label>
+        </div>
+      </div>
+      <div id="result" class="panel result" hidden></div>
+    </section>
+
+    <!-- Evolução -->
+    <section id="tab-evo" class="tab">
+      <div class="grid2">
+        <div class="panel"><h3>Fitness por geração</h3><canvas id="ch-fit" width="520" height="260"></canvas></div>
+        <div class="panel"><h3>Progresso na volta (%)</h3><canvas id="ch-prog" width="520" height="260"></canvas></div>
+        <div class="panel"><h3>Melhor tempo de volta (s)</h3><canvas id="ch-time" width="520" height="260"></canvas></div>
+        <div class="panel"><h3>Generalização em pistas novas (%)</h3><canvas id="ch-val" width="520" height="260"></canvas></div>
+      </div>
+      <p id="evo-note" class="muted"></p>
+    </section>
+
+    <!-- Comparar -->
+    <section id="tab-compare" class="tab">
+      <div class="panel muted">O melhor carro de cada geração escolhida, correndo ao mesmo tempo na mesma pista.</div>
+      <div class="stage">
+        <canvas id="canvas-cmp" width="1100" height="640"></canvas>
+        <div class="bar"><button id="cplay">⏸</button><input id="cscrub" type="range" min="0" max="1000" value="0">
+          <select id="cspeed"><option>1</option><option selected>2</option><option>4</option><option>8</option></select><span class="muted">×</span></div>
+      </div>
+      <div id="legend" class="panel legend"></div>
+    </section>
+
+    <!-- Generalização -->
+    <section id="tab-gen" class="tab">
+      <div class="panel muted" id="gen-sum"></div>
+      <div class="panel"><table id="gen-table"><thead><tr><th>Pista</th><th>Extensão</th><th>Progresso</th><th>Volta</th><th>Resultado</th><th></th></tr></thead><tbody></tbody></table></div>
+    </section>
+  </main>
+
+  <footer class="muted">Simulação em Python (numpy) · API FastAPI na Vercel · código em <a href="https://github.com/RodrigoAiosa/F1_com_IA">RodrigoAiosa/F1_com_IA</a></footer>
+  <script src="/app.js"></script>
+</body>
+</html>
