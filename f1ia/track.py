@@ -84,6 +84,11 @@ class Track:
         k = np.ones(5) / 5
         pad = np.concatenate([dth[-2:], dth, dth[:2]])
         self.curvature = np.convolve(pad, k, mode="valid")  # + = esquerda
+        self.elevation = np.zeros(self.M)   # m acima do nível do mar (0 = pista plana)
+        self.slope = np.zeros(self.M)       # greve (subida positiva), dElev/ds
+        self.drs = np.zeros(self.M, dtype=bool)
+        self.drs_zones: list[tuple[float, float]] = []
+        self.meta: dict = {}
         self.start_pos = self.center[0].copy()
         self.start_heading = float(self.heading[0])
         self._build_grid()
@@ -105,6 +110,27 @@ class Track:
         data = np.loadtxt(path, delimiter=",", ndmin=2)
         w = data[:, 2] if data.shape[1] > 2 else width
         return cls(name, data[:, :2], w, **kw)
+
+    def set_elevation(self, fracs, elevs, drop: float | None = None, smooth: int = 41):
+        """Perfil de altitude periódico a partir de pontos (fração da volta, metros)."""
+        e = np.interp(self.s / self.length, fracs, elevs, period=1.0)
+        k = np.ones(smooth) / smooth
+        pad = smooth // 2
+        e = np.convolve(np.concatenate([e[-pad:], e, e[:pad]]), k, mode="valid")
+        if drop is not None:   # força o desnível exato (máx - mín)
+            e = e.min() + (e - e.min()) * (drop / (e.max() - e.min()))
+        self.elevation = e
+        self.slope = (np.roll(e, -1) - np.roll(e, 1)) / (2 * self.ds)
+
+    def set_drs(self, zones):
+        """zones: lista de (s_inicio, s_fim) em metros; pode cruzar a linha de largada."""
+        self.drs_zones = [(float(a), float(b)) for a, b in zones]
+        self.drs = np.zeros(self.M, dtype=bool)
+        for a, b in zones:
+            if a <= b:
+                self.drs |= (self.s >= a) & (self.s <= b)
+            else:
+                self.drs |= (self.s >= a) | (self.s <= b)
 
     def _build_grid(self):
         pad = 30.0
@@ -185,6 +211,9 @@ class Track:
             "width": round(float(self.width.mean()), 1),
             "start": {"x": round(float(self.start_pos[0]), 2), "y": round(float(self.start_pos[1]), 2),
                       "heading": round(self.start_heading, 4)},
+            "meta": self.meta,
+            "elevation": np.round(self.elevation[::5], 1).tolist(),
+            "drs": [[round(a, 1), round(b, 1)] for a, b in self.drs_zones],
             "center": r(self.center),
             "left": r(self.left),
             "right": r(self.right),

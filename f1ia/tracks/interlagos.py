@@ -8,6 +8,8 @@ Para usar dados reais, exporte a linha central (x,y em metros) para CSV e use
 """
 from __future__ import annotations
 
+import numpy as np
+
 from ..track import Track
 
 # (x, y) em metros, sentido anti-horário. O primeiro ponto fica na reta dos boxes.
@@ -35,7 +37,6 @@ CONTROL_POINTS = [
 ]
 
 TRACK_WIDTH = 14.0
-SCALE = 1.263  # ajusta o comprimento para ~4,3 km
 
 SECTORS = [
     ("Reta dos Boxes", 0.00), ("Senna S", 0.10), ("Curva do Sol", 0.18), ("Reta Oposta", 0.30),
@@ -44,6 +45,33 @@ SECTORS = [
 ]
 
 
+LENGTH_M = 4309.0        # extensão oficial
+RACE_LAPS = 71           # 71 x 4,309 km = 305,939 km
+ELEVATION_DROP = 56.0    # desnível aproximado entre o ponto mais alto e o mais baixo (m)
+# (fração da volta, altitude em m): alto na reta dos boxes, mais baixo perto do Pinheirinho
+ELEVATION = [(0.00, 800), (0.08, 797), (0.12, 785), (0.18, 776), (0.30, 770), (0.45, 774), (0.50, 765),
+             (0.53, 750), (0.62, 746), (0.68, 744), (0.78, 752), (0.87, 760), (0.93, 773), (0.97, 788)]
+
+
+def _nearest_s(track, xy):
+    return float(track.s[np.linalg.norm(track.center - np.asarray(xy), axis=1).argmin()])
+
+
 def build_interlagos() -> Track:
-    pts = [(x * SCALE, y * SCALE) for x, y in CONTROL_POINTS]
-    return Track.from_control_points("Interlagos (estilizada)", pts, TRACK_WIDTH)
+    scale = 1.263
+    for _ in range(6):   # ajusta a escala até a extensão ficar em 4.309 m
+        pts = [(x * scale, y * scale) for x, y in CONTROL_POINTS]
+        track = Track.from_control_points("Interlagos (estilizada)", pts, TRACK_WIDTH)
+        if abs(track.length - LENGTH_M) < 0.05:
+            break
+        scale *= LENGTH_M / track.length
+    track.set_elevation([f for f, _ in ELEVATION], [e for _, e in ELEVATION], drop=ELEVATION_DROP)
+    track.elevation += 765.0 - track.elevation.mean() + 0  # altitude média ~765 m
+    track.elevation += 0.0
+    near = lambda i: _nearest_s(track, (CONTROL_POINTS[i][0] * scale, CONTROL_POINTS[i][1] * scale))
+    # DRS 1: reta dos boxes (saída da Junção até o Senna S) | DRS 2: reta oposta
+    track.set_drs([(near(len(CONTROL_POINTS) - 2), near(3)), (near(12), near(15))])
+    track.meta = {"circuit": "Autódromo José Carlos Pace (estilizado)", "laps": RACE_LAPS,
+                  "race_km": round(RACE_LAPS * track.length / 1000, 2), "elevation_drop_m": ELEVATION_DROP,
+                  "altitude_avg_m": round(float(track.elevation.mean())), "drs_zones": 2}
+    return track

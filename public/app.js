@@ -20,6 +20,12 @@ class View {
     this.b = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
     const mk = (pts) => { const p = new Path2D(); pts.forEach((q, i) => (i ? p.lineTo(q[0], q[1]) : p.moveTo(q[0], q[1]))); p.closePath(); return p; };
     this.pCenter = mk(t.center); this.pL = mk(t.left); this.pR = mk(t.right);
+    // zonas de DRS: trecho da linha central entre s_inicio e s_fim (pode cruzar a largada)
+    const n = t.center.length, ds = t.length / n; this.pDrs = new Path2D();
+    for (const [a, b] of t.drs || []) {
+      let i = Math.round(a / ds), j = Math.round(b / ds); if (j < i) j += n;
+      for (let k = i; k <= j; k++) { const q = t.center[k % n]; k === i ? this.pDrs.moveTo(q[0], q[1]) : this.pDrs.lineTo(q[0], q[1]); }
+    }
   }
   transform(focus) {
     const { width: W, height: H } = this.c, b = this.b, pad = 30;
@@ -34,6 +40,7 @@ class View {
     const s = this.transform(focus), t = this.track;
     ctx.lineJoin = ctx.lineCap = "round";
     ctx.strokeStyle = "#3e4046"; ctx.lineWidth = t.width; ctx.stroke(this.pCenter);
+    ctx.strokeStyle = "rgba(63,185,80,.45)"; ctx.lineWidth = t.width * 0.8; ctx.lineCap = "butt"; ctx.stroke(this.pDrs); ctx.lineCap = "round";
     ctx.strokeStyle = "#ebebeb"; ctx.lineWidth = Math.max(0.35, 1.2 / s); ctx.stroke(this.pL); ctx.stroke(this.pR);
     const st = t.start, nx = -Math.sin(st.heading), ny = Math.cos(st.heading);
     ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.4; ctx.beginPath();
@@ -121,7 +128,8 @@ async function runRace(spec, model) {
     const d = await getJSON(`/api/simulate?track=${encodeURIComponent(spec)}&model=${encodeURIComponent(model)}`);
     raceView.setTrack(d.track); d.car.color = "#ff5050"; racePlayer.load([d.car]); st.textContent = "";
     const r = d.result, res = $("#result"); res.hidden = false;
-    res.innerHTML = `<div><b>${d.track.name}</b><span>${(d.track.length / 1000).toFixed(2)} km · largura ${d.track.width} m</span></div>
+    res.innerHTML = `<div><b>${d.track.name}</b><span>${(d.track.length / 1000).toFixed(3)} km · largura ${d.track.width} m</span></div>
+      ${d.track.meta && d.track.meta.laps ? `<div><b>${d.track.meta.laps} voltas</b><span>${d.track.meta.race_km} km de corrida · desnível ${d.track.meta.elevation_drop_m} m · altitude ~${d.track.meta.altitude_avg_m} m · ${d.track.meta.drs_zones} zonas de DRS (verde)</span></div>` : ""}
       <div><b class="${r.finished ? "ok" : "bad"}">${r.finished ? "Completou" : r.reason}</b><span>${d.car.label}</span></div>
       <div><b>${(r.progress * 100).toFixed(1)}%</b><span>da volta</span></div>
       <div><b>${r.finished ? fmtTime(r.time) : "—"}</b><span>tempo de volta</span></div>

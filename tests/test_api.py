@@ -29,7 +29,7 @@ def test_health_and_models(client):
 
 def test_track_endpoints(client):
     d = client.get("/api/track?track=interlagos").json()
-    assert 4100 < d["length"] < 4500 and len(d["center"]) == len(d["left"]) == len(d["right"])
+    assert abs(d["length"] - 4309) < 0.6 and d["meta"]["laps"] == 71 and len(d["center"]) == len(d["left"]) == len(d["right"])
     assert client.get("/api/track?track=seed:12").json()["name"] == "seed:12"
 
 

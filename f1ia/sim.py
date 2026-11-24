@@ -26,6 +26,7 @@ class CarParams:
     brake: float = 24.0          # m/s²
     a_lat: float = 22.0          # aderência lateral máxima (m/s²); acima disso o carro "abre" a trajetória
     steer_rate: float = 5.0      # 1/s (volante vai de -1 a 1 em ~0,4 s)
+    drs_boost: float = 0.06      # +6% de velocidade máxima nas zonas de DRS
     drag: float = 0.05           # 1/s: arrasto proporcional à velocidade (carro solta e desacelera)
     length: float = 4.6          # só para desenho
     width: float = 1.9
@@ -127,8 +128,11 @@ class Sim:
         self.steer[ai] = st
         thr = np.clip(throttle_cmd, -1.0, 1.0)
         v = self.v[ai]
-        acc = np.where(thr >= 0, c.accel * thr * np.maximum(0.0, 1.0 - v / c.max_speed), c.brake * thr) - c.drag * v
-        v = np.clip(v + acc * dt, 0.0, c.max_speed)
+        cur = self.idx[ai]
+        vmax = c.max_speed * (1.0 + c.drs_boost * self.track.drs[cur])   # DRS: mais velocidade final nas retas
+        acc = np.where(thr >= 0, c.accel * thr * np.maximum(0.0, 1.0 - v / vmax), c.brake * thr) - c.drag * v
+        acc = acc - 9.81 * self.track.slope[cur]                         # subida freia, descida acelera
+        v = np.clip(v + acc * dt, 0.0, vmax)
         kappa = st * c.kmax
         klim = c.a_lat / np.maximum(v, 1.0) ** 2
         kappa = np.clip(kappa, -klim, klim)

@@ -13,7 +13,10 @@ def circle_track(r=300.0, width=14.0):
 
 def test_interlagos_length_and_curvature():
     t = get_track("interlagos")
-    assert 4100 < t.length < 4500
+    assert t.length == pytest.approx(4309.0, abs=0.5)           # extensão oficial
+    assert t.elevation.max() - t.elevation.min() == pytest.approx(56.0, abs=0.5)
+    assert len(t.drs_zones) == 2 and t.drs.any() and t.meta["laps"] == 71
+    assert t.meta["race_km"] == pytest.approx(305.94, abs=0.1)
     assert 1 / np.abs(t.curvature).max() > 20      # sem curvas impossíveis
     assert t.M > 1000
 
